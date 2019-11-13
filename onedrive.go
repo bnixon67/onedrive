@@ -292,10 +292,7 @@ func (c *OneDriveClient) ListRecentFiles() (driveItems DriveItems, err error) {
 }
 
 type OneDriveClient struct {
-	ctx           context.Context
-	conf          *oauth2.Config
-	httpClient    *http.Client
-	tokenFileName string
+	httpClient *http.Client
 }
 
 const (
@@ -309,20 +306,20 @@ const (
 // If tokenFileName doesn't exist, then a token is requested and saved in the file.
 // User interaction is required to request a token for the first time.
 func New(tokenFileName string) *OneDriveClient {
-	client := &OneDriveClient{
-		ctx:           context.Background(),
-		tokenFileName: tokenFileName,
-		conf: &oauth2.Config{
-			ClientID: "c32f556d-11cc-45ce-9b73-37f701abf48c",
-			// TODO: need offline_access? AuthCodeURL offline?
-			Scopes: []string{"Files.Read.All", "offline_access"},
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  msAuthURL,
-				TokenURL: msTokenURL,
-			},
-			RedirectURL: myRedirectURL,
+	ctx := context.Background()
+
+	conf := &oauth2.Config{
+		ClientID: "c32f556d-11cc-45ce-9b73-37f701abf48c",
+		// TODO: need offline_access? AuthCodeURL offline?
+		Scopes: []string{"Files.Read.All", "offline_access"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  msAuthURL,
+			TokenURL: msTokenURL,
 		},
+		RedirectURL: myRedirectURL,
 	}
+
+	client := &OneDriveClient{}
 
 	// try to get a token from the file
 	token, _ := readTokenFromFile(tokenFileName)
@@ -334,7 +331,7 @@ func New(tokenFileName string) *OneDriveClient {
 		state := randomBytesBase64(32)
 
 		// get authentication URL for offline access
-		authURL := client.conf.AuthCodeURL(state, oauth2.AccessTypeOffline)
+		authURL := conf.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
 		// instruct the user to vist the authentication URL
 		fmt.Println("Vist the following URL in a browser to authenticate this application")
@@ -364,17 +361,17 @@ func New(tokenFileName string) *OneDriveClient {
 		code := responseURL.Query().Get("code")
 
 		// exchange authorize code for token
-		token, err = client.conf.Exchange(client.ctx, code)
+		token, err = conf.Exchange(ctx, code)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// save the token to a file
-		writeTokenToFile("token.json", token)
+		writeTokenToFile(tokenFileName, token)
 	}
 
 	// create HTTP client using the provided token
-	client.httpClient = client.conf.Client(client.ctx, token)
+	client.httpClient = conf.Client(ctx, token)
 
 	return client
 }
