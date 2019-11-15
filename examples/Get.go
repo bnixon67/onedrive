@@ -39,7 +39,7 @@ func showResponse(v interface{}) {
 func main() {
 	oneDriveClient := onedrive.New(".token.json")
 
-	resp, err := oneDriveClient.Get("https://graph.microsoft.com/v1.0/me/drive/root/children")
+	resp, err := oneDriveClient.Get("https://graph.microsoft.com/v1.0/me/drive")
 	if err != nil {
 		log.Fatal(err)
 	}
