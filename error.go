@@ -41,6 +41,8 @@ func (e *RespError) Error() string {
 }
 
 func codeIsError(code int) bool {
+	// Microsoft Graph error responses and resource types
+	// https://docs.microsoft.com/en-us/graph/errors
 	var errorCodes = []int{400, 401, 403, 404, 405, 406, 409, 410,
 		411, 412, 413, 415, 416, 422, 423, 429, 500, 501, 503,
 		504, 507, 509}
